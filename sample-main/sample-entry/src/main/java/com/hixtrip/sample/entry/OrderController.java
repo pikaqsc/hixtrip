@@ -1,7 +1,13 @@
 package com.hixtrip.sample.entry;
 
+import com.hixtrip.sample.app.api.OrderService;
 import com.hixtrip.sample.client.order.dto.CommandOderCreateDTO;
 import com.hixtrip.sample.client.order.dto.CommandPayDTO;
+import com.hixtrip.sample.client.sample.vo.OrderVO;
+import com.hixtrip.sample.domain.common.Response;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,9 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * todo 这是你要实现的
  */
+@AllArgsConstructor
 @RestController
 public class OrderController {
 
+    final OrderService orderService;
 
     /**
      * todo 这是你要实现的接口
@@ -20,10 +28,18 @@ public class OrderController {
      * @return 请修改出参对象
      */
     @PostMapping(path = "/command/order/create")
-    public String order(@RequestBody CommandOderCreateDTO commandOderCreateDTO) {
-        //登录信息可以在这里模拟
-        var userId = "";
-        return "";
+    public Response<OrderVO> order(@RequestBody CommandOderCreateDTO commandOderCreateDTO) {
+        //登录信息可以在这里模拟 (获取当前登录userId)
+        String userId = "";
+        // 校验是否为当前用户？？
+        if (!StringUtils.hasText(userId) || !userId.equals(commandOderCreateDTO.getUserId())) {
+            Response.fail("订单请求非当前用户");
+        }
+        try {
+            return Response.success(orderService.order(commandOderCreateDTO));
+        } catch (Exception ex) {
+            return Response.fail("下单失败：" + ex.getMessage().substring(0, 9));
+        }
     }
 
     /**
@@ -34,8 +50,9 @@ public class OrderController {
      * @return 请修改出参对象
      */
     @PostMapping(path = "/command/order/pay/callback")
-    public String payCallback(@RequestBody CommandPayDTO commandPayDTO) {
-        return "";
+    public Response<String> payCallback(@RequestBody CommandPayDTO commandPayDTO) {
+        orderService.payCallback(commandPayDTO);
+        return Response.success("记录成功");
     }
 
 }
